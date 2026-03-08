@@ -22,3 +22,8 @@ export * from './enums';
  * 
  */
 export type Post = Prisma.PostModel
+/**
+ * Model ApiTokens
+ * 
+ */
+export type ApiTokens = Prisma.ApiTokensModel

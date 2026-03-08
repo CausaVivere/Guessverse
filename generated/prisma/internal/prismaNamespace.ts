@@ -384,7 +384,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
-  Post: 'Post'
+  Post: 'Post',
+  ApiTokens: 'ApiTokens'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -400,7 +401,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "post"
+    modelProps: "post" | "apiTokens"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -478,6 +479,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ApiTokens: {
+      payload: Prisma.$ApiTokensPayload<ExtArgs>
+      fields: Prisma.ApiTokensFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ApiTokensFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ApiTokensFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        findFirst: {
+          args: Prisma.ApiTokensFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ApiTokensFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        findMany: {
+          args: Prisma.ApiTokensFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>[]
+        }
+        create: {
+          args: Prisma.ApiTokensCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        createMany: {
+          args: Prisma.ApiTokensCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ApiTokensCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>[]
+        }
+        delete: {
+          args: Prisma.ApiTokensDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        update: {
+          args: Prisma.ApiTokensUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        deleteMany: {
+          args: Prisma.ApiTokensDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ApiTokensUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ApiTokensUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>[]
+        }
+        upsert: {
+          args: Prisma.ApiTokensUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiTokensPayload>
+        }
+        aggregate: {
+          args: Prisma.ApiTokensAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateApiTokens>
+        }
+        groupBy: {
+          args: Prisma.ApiTokensGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiTokensGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ApiTokensCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiTokensCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -525,6 +600,16 @@ export const PostScalarFieldEnum = {
 } as const
 
 export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
+
+
+export const ApiTokensScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ApiTokensScalarFieldEnum = (typeof ApiTokensScalarFieldEnum)[keyof typeof ApiTokensScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -700,6 +785,7 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   post?: Prisma.PostOmit
+  apiTokens?: Prisma.ApiTokensOmit
 }
 
 /* Types for Logging */

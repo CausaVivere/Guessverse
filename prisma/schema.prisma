@@ -21,3 +21,10 @@ model Post {
 
     @@index([name])
 }
+
+model ApiTokens {
+    id        String   @id @default(uuid())
+    token     String
+    expiresAt DateTime
+    updatedAt DateTime @updatedAt
+}

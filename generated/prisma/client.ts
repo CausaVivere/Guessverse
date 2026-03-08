@@ -46,3 +46,8 @@ export { Prisma }
  * 
  */
 export type Post = Prisma.PostModel
+/**
+ * Model ApiTokens
+ * 
+ */
+export type ApiTokens = Prisma.ApiTokensModel

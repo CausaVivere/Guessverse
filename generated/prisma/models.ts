@@ -9,4 +9,5 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Post'
+export type * from './models/ApiTokens'
 export type * from './commonInputTypes'
