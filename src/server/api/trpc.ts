@@ -6,7 +6,7 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -15,14 +15,16 @@ import { db } from "~/server/db";
 
 export async function getClerkUser() {
   const authSession = await auth();
+  const user = await currentUser();
   //   const user = await currentUser();
 
-  if (!authSession) {
+  if (!authSession || !user) {
     return null;
   }
 
   const session = {
     ...authSession,
+    user: user,
   };
 
   return session;
@@ -134,7 +136,12 @@ const protectedMiddleware = t.middleware(async ({ ctx, next, path }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
-  const result = await next();
+  const result = await next({
+    ctx: {
+      ...ctx,
+      auth: ctx.auth!,
+    },
+  });
 
   const end = Date.now();
   console.log(`[TRPC] ${path} took ${end - start}ms to execute`);

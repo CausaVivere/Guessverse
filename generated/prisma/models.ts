@@ -10,4 +10,9 @@
  */
 export type * from './models/Post'
 export type * from './models/ApiTokens'
+export type * from './models/Anime'
+export type * from './models/JikanEntity'
+export type * from './models/AnimeCharacter'
+export type * from './models/AnimeGameset'
+export type * from './models/VoiceActor'
 export type * from './commonInputTypes'

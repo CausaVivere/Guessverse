@@ -5,6 +5,26 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.igdb.com",
+        pathname: "/igdb/image/**",
+      },
+      {
+        protocol: "https",
+        hostname: "myanimelist.net",
+        pathname: "/images/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.myanimelist.net",
+        pathname: "/images/**",
+      },
+    ],
+  },
+};
 
 export default config;

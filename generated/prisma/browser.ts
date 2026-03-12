@@ -27,3 +27,28 @@ export type Post = Prisma.PostModel
  * 
  */
 export type ApiTokens = Prisma.ApiTokensModel
+/**
+ * Model Anime
+ * 
+ */
+export type Anime = Prisma.AnimeModel
+/**
+ * Model JikanEntity
+ * 
+ */
+export type JikanEntity = Prisma.JikanEntityModel
+/**
+ * Model AnimeCharacter
+ * 
+ */
+export type AnimeCharacter = Prisma.AnimeCharacterModel
+/**
+ * Model AnimeGameset
+ * 
+ */
+export type AnimeGameset = Prisma.AnimeGamesetModel
+/**
+ * Model VoiceActor
+ * 
+ */
+export type VoiceActor = Prisma.VoiceActorModel

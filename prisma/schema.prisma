@@ -28,3 +28,83 @@ model ApiTokens {
     expiresAt DateTime
     updatedAt DateTime @updatedAt
 }
+
+model Anime {
+    id              Int              @id
+    title           String
+    url             String?
+    image           String?
+    smallImage      String?
+    largeImage      String?
+    titleEnglish    String?
+    titleJapanese   String?
+    titleSynonyms   String[]
+    type            String?
+    source          String?
+    episodes        Int?
+    status          String?
+    airing          Boolean?
+    airedFrom       DateTime?
+    airedTo         DateTime?
+    airedString     String?
+    rating          String?
+    score           Int?
+    season          String?
+    year            Int?
+    studios         JikanEntity[]    @relation("AnimeStudios")
+    genres          JikanEntity[]    @relation("AnimeGenres")
+    explicitGenres  JikanEntity[]    @relation("AnimeExplicitGenres")
+    themes          JikanEntity[]    @relation("AnimeThemes")
+    demographics    JikanEntity[]    @relation("AnimeDemographics")
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    animeCharacters AnimeCharacter[]
+    gameSets        AnimeGameset[]
+}
+
+model JikanEntity {
+    id                   Int     @id @default(autoincrement())
+    name                 String
+    type                 String?
+    url                  String?
+    animesMade           Anime[] @relation("AnimeStudios")
+    animeInGenre         Anime[] @relation("AnimeGenres")
+    animeInExplicitGenre Anime[] @relation("AnimeExplicitGenres")
+    animeInTheme         Anime[] @relation("AnimeThemes")
+    animeInDemographic   Anime[] @relation("AnimeDemographics")
+}
+
+model AnimeCharacter {
+    id          Int            @id
+    animeId     Int
+    anime       Anime          @relation(fields: [animeId], references: [id])
+    url         String?
+    image       String?
+    name        String
+    role        String
+    favorites   Int
+    voiceActors VoiceActor[]
+    gameSets    AnimeGameset[]
+}
+
+model AnimeGameset {
+    id          String           @id @default(uuid())
+    name        String
+    img         String?
+    creatorId   String
+    creatorName String
+    plays       Int              @default(0)
+    animes      Anime[]
+    characters  AnimeCharacter[]
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+}
+
+model VoiceActor {
+    id         Int              @id
+    url        String?
+    image      String?
+    name       String
+    language   String
+    characters AnimeCharacter[]
+}

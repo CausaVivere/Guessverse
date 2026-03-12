@@ -52,7 +52,12 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Post: 'Post',
-  ApiTokens: 'ApiTokens'
+  ApiTokens: 'ApiTokens',
+  Anime: 'Anime',
+  JikanEntity: 'JikanEntity',
+  AnimeCharacter: 'AnimeCharacter',
+  AnimeGameset: 'AnimeGameset',
+  VoiceActor: 'VoiceActor'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -91,6 +96,83 @@ export const ApiTokensScalarFieldEnum = {
 export type ApiTokensScalarFieldEnum = (typeof ApiTokensScalarFieldEnum)[keyof typeof ApiTokensScalarFieldEnum]
 
 
+export const AnimeScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  url: 'url',
+  image: 'image',
+  smallImage: 'smallImage',
+  largeImage: 'largeImage',
+  titleEnglish: 'titleEnglish',
+  titleJapanese: 'titleJapanese',
+  titleSynonyms: 'titleSynonyms',
+  type: 'type',
+  source: 'source',
+  episodes: 'episodes',
+  status: 'status',
+  airing: 'airing',
+  airedFrom: 'airedFrom',
+  airedTo: 'airedTo',
+  airedString: 'airedString',
+  rating: 'rating',
+  score: 'score',
+  season: 'season',
+  year: 'year',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnimeScalarFieldEnum = (typeof AnimeScalarFieldEnum)[keyof typeof AnimeScalarFieldEnum]
+
+
+export const JikanEntityScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  url: 'url'
+} as const
+
+export type JikanEntityScalarFieldEnum = (typeof JikanEntityScalarFieldEnum)[keyof typeof JikanEntityScalarFieldEnum]
+
+
+export const AnimeCharacterScalarFieldEnum = {
+  id: 'id',
+  animeId: 'animeId',
+  url: 'url',
+  image: 'image',
+  name: 'name',
+  role: 'role',
+  favorites: 'favorites'
+} as const
+
+export type AnimeCharacterScalarFieldEnum = (typeof AnimeCharacterScalarFieldEnum)[keyof typeof AnimeCharacterScalarFieldEnum]
+
+
+export const AnimeGamesetScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  img: 'img',
+  creatorId: 'creatorId',
+  creatorName: 'creatorName',
+  plays: 'plays',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AnimeGamesetScalarFieldEnum = (typeof AnimeGamesetScalarFieldEnum)[keyof typeof AnimeGamesetScalarFieldEnum]
+
+
+export const VoiceActorScalarFieldEnum = {
+  id: 'id',
+  url: 'url',
+  image: 'image',
+  name: 'name',
+  language: 'language'
+} as const
+
+export type VoiceActorScalarFieldEnum = (typeof VoiceActorScalarFieldEnum)[keyof typeof VoiceActorScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -105,4 +187,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
