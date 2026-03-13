@@ -13,8 +13,10 @@ import { api } from "~/trpc/react";
 import { useParty } from "~/utils/PartyProvider";
 import SetVisualizer from "../_components/setVisualiser";
 import type { AnimeGameSet } from "~/server/api/utils/jikan";
+import { Video } from "lucide-react";
 
 export default function Lobby() {
+  const [changingSet, setIsChangingSet] = useState(false);
   const {
     roomId,
     playerName,
@@ -34,6 +36,10 @@ export default function Lobby() {
       router.push("/");
     }
   }, [connected, router]);
+
+  useEffect(() => {
+    setIsChangingSet(false);
+  }, [roomState?.set]);
 
   if (!connected) {
     return <Loading message="Connecting to room..." fullScreen />;
@@ -57,6 +63,51 @@ export default function Lobby() {
         </div>
         <div className="min flex w-full items-start justify-between gap-4">
           <div className="border-accent flex h-[60vh] w-1/5 flex-col gap-2 border-r p-4">
+            <p className="text-foreground text-center text-sm font-semibold">
+              Click to change set
+            </p>
+            {roomState?.set ? (
+              <div
+                className="border-muted mb-5 flex h-24 w-full flex-row gap-3 rounded-xl border px-5 py-2 hover:cursor-pointer hover:bg-zinc-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsChangingSet(true);
+                }}
+              >
+                {roomState.set.img ? (
+                  <Image
+                    alt={roomState.set.name + "photo"}
+                    src={roomState.set.img}
+                    width={500}
+                    height={500}
+                    className="h-20 w-20 rounded-lg"
+                  />
+                ) : (
+                  <div> </div>
+                )}
+                <div className="h-full w-full">
+                  <h3 className="text-xl font-semibold">
+                    {roomState.set.name}
+                  </h3>
+                  <p className="text-lg">
+                    By user: {roomState.set.creatorName}
+                  </p>
+                  <p className="text-lg">{roomState.set.plays} plays</p>
+                </div>
+              </div>
+            ) : (
+              <div className="border-muted flex h-24 w-full flex-row items-center justify-center gap-3 rounded-xl border px-5 py-2 hover:cursor-pointer hover:bg-zinc-700">
+                <div className="border-secondary flex h-20 w-20 items-center justify-center rounded-lg border">
+                  <Video />
+                </div>
+                <div className="h-full w-full">
+                  <h3 className="text-xl font-semibold">
+                    Waiting for host to choose set
+                  </h3>
+                </div>
+              </div>
+            )}
+
             <h2 className="text-lg font-semibold">
               Players ({roomState.players.filter((p) => p.connected).length}/
               {roomState.players.length})
@@ -89,32 +140,10 @@ export default function Lobby() {
                 message="Waiting for host to select character set..."
                 className="m-auto"
               />
-            ) : !roomState.set ? (
+            ) : !roomState.set || changingSet ? (
               <SelectAnimeSet />
             ) : (
               <div className="flex h-full w-full justify-center gap-6">
-                <div className="border-muted flex h-24 w-1/4 flex-row gap-3 rounded-xl border px-5 py-2 hover:cursor-pointer hover:bg-zinc-700">
-                  {roomState.set.img ? (
-                    <Image
-                      alt={roomState.set.name + "photo"}
-                      src={roomState.set.img}
-                      width={500}
-                      height={500}
-                      className="h-20 w-20 rounded-lg"
-                    />
-                  ) : (
-                    <div> </div>
-                  )}
-                  <div className="h-full w-full">
-                    <h3 className="text-xl font-semibold">
-                      {roomState.set.name}
-                    </h3>
-                    <p className="text-lg">
-                      By user: {roomState.set.creatorName}
-                    </p>
-                    <p className="text-lg">{roomState.set.plays} plays</p>
-                  </div>
-                </div>
                 <SetVisualizer set={roomState.set} />
               </div>
             )}
@@ -196,6 +225,7 @@ function SelectAnimeSet() {
               className="border-muted flex h-24 flex-row gap-3 rounded-xl border px-5 py-2 hover:cursor-pointer hover:bg-zinc-700"
               onClick={(e) => {
                 e.preventDefault();
+                if (roomState?.set?.id === s.id) return;
                 selectSet(s.id);
               }}
             >

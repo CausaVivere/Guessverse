@@ -14,7 +14,13 @@ export default class GameRoom implements Party.Server {
     hostId: null,
     status: "waiting",
     set: null,
+    turn: null,
+    turnDurationMs: 45_000,
+    turnEndsAt: null,
+    timeRemainingMs: null,
   };
+
+  private tickInterval: ReturnType<typeof setInterval> | null = null;
 
   // Track which connection belongs to which player
   connections: ConnectionMap = new Map();
@@ -44,6 +50,12 @@ export default class GameRoom implements Party.Server {
       case "start-game":
         this.handleStartGame(sender);
         break;
+      case "turnCard":
+        this.handleTurn(sender, msg.playerId, msg.characterId);
+        break;
+      case "endTurn":
+        this.handleEndTurn(sender);
+        break;
       case "selected-set":
         this.handleSelectSet(sender, msg.setId);
         break;
@@ -68,6 +80,10 @@ export default class GameRoom implements Party.Server {
     player.connectionId = "";
 
     this.broadcast({ type: "room-state", state: this.state });
+  }
+
+  onDestroy() {
+    this.stopTurnTimer();
   }
 
   // ─── Handlers ────────────────────────────────────────────────
@@ -104,6 +120,8 @@ export default class GameRoom implements Party.Server {
       name,
       score: 0,
       connected: true,
+      characterToGuess: null,
+      turnt: [],
     };
     this.state.players.push(player);
 
@@ -132,7 +150,33 @@ export default class GameRoom implements Party.Server {
       return;
     }
 
+    if (!this.state.set) {
+      this.send(conn, {
+        type: "error",
+        message: "Character set not selected",
+      });
+      return;
+    }
+
+    let chars = [...this.state.set.characters];
+
+    for (const player of this.state.players) {
+      if (!player.connected) continue;
+      chars = shuffle(chars);
+      // Assign a random character to each player
+      player.characterToGuess = chars.pop()?.id || null;
+    }
+
+    this.state.set.characters = shuffle(this.state.set.characters);
+
+    const connectedPlayers = this.state.players.filter((p) => p.connected);
+    this.state.turn =
+      connectedPlayers[Math.floor(Math.random() * connectedPlayers.length)]
+        ?.id ?? null;
     this.state.status = "playing";
+
+    // Start the turn timer loop.
+    this.startTurnTimer();
     this.broadcast({ type: "room-state", state: this.state });
   }
 
@@ -172,6 +216,122 @@ export default class GameRoom implements Party.Server {
     }
   }
 
+  private handleTurn(
+    conn: Party.Connection,
+    playerId: string,
+    characterId: number,
+  ) {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player) return;
+
+    // Check if it's the player's turn
+    if (player.id !== this.state.turn) {
+      this.send(conn, {
+        type: "error",
+        message: "It's not your turn",
+      });
+      return;
+    }
+
+    if (player.turnt.includes(characterId)) {
+      player.turnt = player.turnt.filter((id) => id !== characterId);
+    } else {
+      // Update the player's turn history
+      player.turnt.push(characterId);
+    }
+
+    // Broadcast the updated state
+    this.broadcast({ type: "room-state", state: this.state });
+  }
+
+  // ─── Turn timer / round robin ───────────────────────────────
+  private startTurnTimer() {
+    // Only run timer during active game
+    if (this.state.status !== "playing") return;
+
+    // Ensure fixed duration is set (can be made configurable later)
+    if (!this.state.turnDurationMs || this.state.turnDurationMs < 5_000) {
+      this.state.turnDurationMs = 45_000;
+    }
+
+    // Initialize turn end
+    if (!this.state.turnEndsAt) {
+      this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
+    }
+
+    this.stopTurnTimer();
+    this.tickInterval = setInterval(() => this.tickTurnTimer(), 1000);
+  }
+
+  private stopTurnTimer() {
+    if (this.tickInterval) {
+      clearInterval(this.tickInterval);
+      this.tickInterval = null;
+    }
+  }
+
+  private tickTurnTimer() {
+    if (this.state.status !== "playing") {
+      this.stopTurnTimer();
+      return;
+    }
+
+    const now = Date.now();
+    const endsAt = this.state.turnEndsAt;
+
+    if (!endsAt || !this.state.turn) {
+      // Recover if state got into a bad spot
+      this.advanceTurn();
+      this.broadcast({ type: "room-state", state: this.state });
+      return;
+    }
+
+    const remaining = Math.max(0, endsAt - now);
+    this.state.timeRemainingMs = remaining;
+
+    if (remaining <= 0) {
+      this.advanceTurn();
+    }
+
+    // Per requirement: update all clients every second.
+    this.broadcast({ type: "room-state", state: this.state });
+  }
+
+  private advanceTurn() {
+    const connected = this.state.players.filter((p) => p.connected);
+    if (connected.length === 0) {
+      this.state.turn = null;
+      this.state.turnEndsAt = null;
+      this.state.timeRemainingMs = null;
+      return;
+    }
+
+    // If current turn player disconnected, or we just ended the turn, go next.
+    const currentIndex = connected.findIndex((p) => p.id === this.state.turn);
+    const nextIndex =
+      currentIndex === -1 ? 0 : (currentIndex + 1) % connected.length;
+    this.state.turn = connected[nextIndex]?.id ?? connected[0]!.id;
+    this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
+    this.state.timeRemainingMs = this.state.turnDurationMs;
+  }
+
+  private handleEndTurn(conn: Party.Connection) {
+    const player = this.state.players.find((p) => p.connectionId === conn.id);
+    if (!player) return;
+
+    // If it's not the player's turn, ignore
+    if (player.id !== this.state.turn) {
+      this.send(conn, {
+        type: "error",
+        message: "It's not your turn",
+      });
+      return;
+    }
+
+    // Advance the turn
+    this.advanceTurn();
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────
   private send(conn: Party.Connection, msg: ServerMessage) {
     conn.send(JSON.stringify(msg));
@@ -183,3 +343,7 @@ export default class GameRoom implements Party.Server {
 }
 
 GameRoom satisfies Party.Worker;
+
+function shuffle(array: Array<any>) {
+  return array.sort(() => Math.random() - 0.5);
+}

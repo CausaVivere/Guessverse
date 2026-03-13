@@ -14,6 +14,7 @@ import type {
   ClientMessage,
   ServerMessage,
   RoomState,
+  Player,
 } from "../../party/types";
 import { useLocalStorage } from "./hooks";
 import { usePathname, useRouter } from "next/navigation";
@@ -73,6 +74,7 @@ type PartyContextValue = {
   isHost: boolean;
   connected: boolean;
   error: string | null;
+  player: Player | null;
 
   // Actions
   setPlayerName: (name: string) => void;
@@ -82,6 +84,8 @@ type PartyContextValue = {
   send: (msg: ClientMessage) => void;
   startGame: () => void;
   selectSet: (setId: string) => void;
+  turnCard: (characterId: number) => void;
+  endTurn: () => void;
 };
 
 const PartyContext = createContext<PartyContextValue | null>(null);
@@ -151,6 +155,7 @@ export function PartyProvider({ children }: { children: ReactNode }) {
 
         switch (msg.type) {
           case "room-state":
+            setError(null);
             setRoomState(msg.state);
             break;
           case "player-joined":
@@ -241,9 +246,29 @@ export function PartyProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const turnCard = useCallback((characterId: number) => {
+    socketRef.current?.send(
+      JSON.stringify({
+        playerId,
+        type: "turnCard",
+        characterId,
+      } satisfies ClientMessage),
+    );
+  }, []);
+
+  const endTurn = useCallback(() => {
+    socketRef.current?.send(
+      JSON.stringify({
+        type: "endTurn",
+      } satisfies ClientMessage),
+    );
+  }, []);
+
   const send = useCallback((msg: ClientMessage) => {
     socketRef.current?.send(JSON.stringify(msg));
   }, []);
+
+  const player = roomState?.players.find((p) => p.id === playerId) ?? null;
 
   return (
     <PartyContext.Provider
@@ -255,6 +280,7 @@ export function PartyProvider({ children }: { children: ReactNode }) {
         connected,
         error,
         isHost,
+        player,
         setPlayerName,
         createRoom,
         joinRoom,
@@ -262,6 +288,8 @@ export function PartyProvider({ children }: { children: ReactNode }) {
         send,
         startGame,
         selectSet,
+        turnCard,
+        endTurn,
       }}
     >
       {children}

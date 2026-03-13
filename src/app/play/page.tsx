@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import Loading from "~/components/ui/loading";
 import { useEffect } from "react";
+import SetVisualizer from "../_components/setVisualiser";
+import { cn } from "~/lib/utils";
+import { ChevronLeft } from "lucide-react";
 
 export default function PlayPage() {
-  const { roomState, roomId, connected, playerId, send, leaveRoom } =
+  const { roomState, roomId, connected, playerId, send, leaveRoom, endTurn } =
     useParty();
   const router = useRouter();
 
@@ -38,38 +41,58 @@ export default function PlayPage() {
     );
   }
 
+  const set = roomState.set!;
+  const currentTurnPlayer = roomState.players.find(
+    (p) => p.id === roomState.turn,
+  );
+  const remainingSeconds =
+    roomState.timeRemainingMs != null
+      ? Math.ceil(roomState.timeRemainingMs / 1000)
+      : null;
+
   // ─── Game is playing ────────────────────────────────────────
   return (
     <div className="bg-background flex min-h-screen flex-col items-center justify-center gap-6">
-      <h1 className="text-3xl font-bold">Game in progress</h1>
-      <p className="text-muted-foreground">Room: {roomId}</p>
-
-      <div className="flex flex-col gap-2 rounded-lg border p-4">
-        <h2 className="text-lg font-semibold">Scoreboard</h2>
-        {roomState.players
-          .sort((a, b) => b.score - a.score)
-          .map((player) => (
-            <div key={player.id} className="flex items-center gap-2">
-              <span className={player.connected ? "" : "text-muted-foreground"}>
-                {player.name}
-              </span>
-              <span className="font-mono text-sm">{player.score}</span>
-              {player.id === playerId && (
-                <span className="text-xs text-blue-400">(you)</span>
-              )}
-            </div>
-          ))}
+      <div className="flex w-full max-w-3xl flex-col items-center justify-center gap-5 px-4">
+        <div className="text-3xl">
+          <span className="font-medium">Turn:</span>{" "}
+          {currentTurnPlayer?.name ?? "—"}
+          {roomState.turn === playerId ? " (you)" : ""}
+        </div>
+        <div className="text-5xl font-bold text-yellow-500">
+          {remainingSeconds != null ? `${remainingSeconds}s` : "—"}
+        </div>
       </div>
 
-      {/* TODO: game grid, guessing UI, etc. */}
+      <div className="flex h-full w-full flex-row items-center justify-center gap-5">
+        <SetVisualizer set={set} inGame={true} />
+      </div>
 
       <Button
         variant="secondary"
+        onClick={(e) => {
+          e.preventDefault();
+          endTurn();
+        }}
+        className={cn(
+          "h-24 w-64 bg-yellow-900 text-4xl font-bold text-yellow-100",
+          {
+            hidden: roomState?.turn !== playerId,
+          },
+        )}
+      >
+        END TURN
+      </Button>
+
+      <Button
+        variant="destructive"
         onClick={() => {
           leaveRoom();
           router.push("/");
         }}
+        className="fixed top-5 left-5 h-12 text-lg"
       >
+        <ChevronLeft />
         Leave Game
       </Button>
     </div>

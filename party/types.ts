@@ -7,7 +7,9 @@ export type ClientMessage =
   | { type: "join"; playerName: string; playerId: string }
   | { type: "start-game" }
   | { type: "selected-set"; setId: string }
-  | { type: "guess"; characterId: number };
+  | { type: "turnCard"; playerId: string; characterId: number }
+  | { type: "guess"; characterId: number }
+  | { type: "endTurn" };
 
 // Messages sent FROM the server TO clients
 export type ServerMessage =
@@ -23,6 +25,8 @@ export type Player = {
   name: string;
   score: number;
   connected: boolean;
+  characterToGuess: number | null;
+  turnt: number[];
 };
 
 export type RoomState = {
@@ -30,4 +34,9 @@ export type RoomState = {
   hostId: string | null; // stable player ID of the host
   status: "waiting" | "playing" | "finished";
   set: AnimeGameSet | null;
+  turn: string | null; // stable player ID of the current turn
+  // Turn timer
+  turnDurationMs: number; // configurable turn duration
+  turnEndsAt: number | null; // epoch ms when current turn ends
+  timeRemainingMs: number | null; // server-computed remaining time (updated every second)
 };
