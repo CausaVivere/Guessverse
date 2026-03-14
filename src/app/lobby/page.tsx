@@ -63,7 +63,7 @@ export default function Lobby() {
           <Separator className="mb-5 w-full" />
         </div>
         <div className="min flex w-full items-start justify-between gap-4">
-          <div className="border-accent flex h-[60vh] w-1/5 flex-col gap-2 border-r">
+          <div className="border-accent flex h-[60vh] w-2/5 flex-col gap-2 border-r p-2">
             <p className="text-foreground text-center text-sm font-semibold">
               Click to change set
             </p>
@@ -72,6 +72,7 @@ export default function Lobby() {
                 className="border-muted mb-5 flex h-24 w-full flex-row gap-3 rounded-xl border px-5 py-2 hover:cursor-pointer hover:bg-zinc-700"
                 onClick={(e) => {
                   e.preventDefault();
+                  if (!isHost) return;
                   setIsChangingSet(true);
                 }}
               >

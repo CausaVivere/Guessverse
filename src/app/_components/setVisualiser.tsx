@@ -13,7 +13,7 @@ export default function SetVisualizer({
   className?: string;
   inGame?: boolean;
 }) {
-  const { turnCard } = useParty();
+  const { turnCard, roomState } = useParty();
   return (
     <div className={cn("grid h-full w-fit grid-cols-6 gap-6", className)}>
       {set.characters.map((char) => (

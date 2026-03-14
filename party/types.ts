@@ -47,6 +47,7 @@ export type RoomState = {
   turnEndsAt: number | null; // epoch ms when current turn ends
   timeRemainingMs: number | null; // server-computed remaining time (updated every second)
   chat: Message[];
+  winnerId: string | null; // stable player ID of the winner
 };
 
 export type Message = {

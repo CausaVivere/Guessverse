@@ -82,7 +82,7 @@ export default function Chat({ className }: { className?: string }) {
       {/* Messages */}
       <div
         ref={scrollerRef}
-        className="flex-1 space-y-2 overflow-y-auto px-3 py-3"
+        className="no-scrollbar flex-1 space-y-2 overflow-y-auto px-3 py-3"
         style={{
           backgroundImage:
             "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 0)",
@@ -128,9 +128,7 @@ export default function Chat({ className }: { className?: string }) {
                 }
               >
                 {!mine ? (
-                  <div
-                    className="mb-0.5 text-[11px] font-medium text-[rgb(var(--sender-rgb)/0.9)]"
-                  >
+                  <div className="mb-0.5 text-[11px] font-medium text-[rgb(var(--sender-rgb)/0.9)]">
                     {senderName}
                   </div>
                 ) : null}

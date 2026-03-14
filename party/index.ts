@@ -26,6 +26,7 @@ export default class GameRoom implements Party.Server {
     turnEndsAt: null,
     timeRemainingMs: null,
     chat: [],
+    winnerId: null,
   };
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
@@ -196,9 +197,12 @@ export default class GameRoom implements Party.Server {
     this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
     this.state.timeRemainingMs = null;
 
+    this.state.winnerId = null;
+
     void fetch(
       `${APP_URL}/api/internal/set/${encodeURIComponent(this.state.set.id)}`,
       {
+        method: "POST",
         headers: { "x-internal-secret": INTERNAL_SECRET },
       },
     ).then((res) => {
@@ -343,6 +347,8 @@ export default class GameRoom implements Party.Server {
     this.state.turn = connected[nextIndex]?.id ?? connected[0]!.id;
     this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
     this.state.timeRemainingMs = null;
+
+    this.broadcast({ type: "room-state", state: this.state });
   }
 
   private handleEndTurn(conn: Party.Connection) {
@@ -401,11 +407,9 @@ export default class GameRoom implements Party.Server {
 
     if (character.id === player.characterToGuess) {
       this.state.status = "finished";
+      this.state.winnerId = player.id;
       this.broadcast({ type: "room-state", state: this.state });
-      this.broadcast({
-        type: "correct-guess",
-        winner: player.id,
-      });
+      this.delayRestart();
     } else {
       this.state.players = this.state.players.map((p) =>
         p.id === player.id ? { ...p, eliminated: true } : p,
@@ -413,11 +417,10 @@ export default class GameRoom implements Party.Server {
 
       if (this.state.players.filter((p) => !p.eliminated).length === 1) {
         this.state.status = "finished";
+        this.state.winnerId =
+          this.state.players.find((p) => !p.eliminated)?.id ?? null;
         this.broadcast({ type: "room-state", state: this.state });
-        this.broadcast({
-          type: "last-player-standing",
-          winner: player.id,
-        });
+        this.delayRestart();
       }
 
       this.broadcast({ type: "room-state", state: this.state });
@@ -439,6 +442,13 @@ export default class GameRoom implements Party.Server {
 
   private generateId() {
     return crypto.randomUUID();
+  }
+
+  private delayRestart() {
+    setTimeout(() => {
+      this.state.status = "waiting";
+      this.broadcast({ type: "room-state", state: this.state });
+    }, 3000);
   }
 }
 
