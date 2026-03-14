@@ -86,6 +86,7 @@ type PartyContextValue = {
   selectSet: (setId: string) => void;
   turnCard: (characterId: number) => void;
   endTurn: () => void;
+  sendMessage: (message: string) => void;
 };
 
 const PartyContext = createContext<PartyContextValue | null>(null);
@@ -264,6 +265,20 @@ export function PartyProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const sendMessage = useCallback((message: string) => {
+    if (!message.trim()) return;
+    if (message.length > 200) {
+      message = message.substring(0, 200);
+    }
+
+    socketRef.current?.send(
+      JSON.stringify({
+        type: "sendMessage",
+        message,
+      } satisfies ClientMessage),
+    );
+  }, []);
+
   const send = useCallback((msg: ClientMessage) => {
     socketRef.current?.send(JSON.stringify(msg));
   }, []);
@@ -290,6 +305,7 @@ export function PartyProvider({ children }: { children: ReactNode }) {
         selectSet,
         turnCard,
         endTurn,
+        sendMessage,
       }}
     >
       {children}

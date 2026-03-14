@@ -190,7 +190,33 @@ export function formatAnime(anime: AnimeObject) {
 
 export type AnimeGameSet = Prisma.AnimeGamesetGetPayload<{
   include: {
-    characters: true;
+    characters: {
+      include: {
+        voiceActors: true;
+        anime: {
+          include: {
+            genres: true;
+            explicitGenres: true;
+            demographics: true;
+            themes: true;
+          };
+        };
+      };
+    };
+  };
+}>;
+
+export type AnimeCharacter = Prisma.AnimeCharacterGetPayload<{
+  include: {
+    voiceActors: true;
+    anime: {
+      include: {
+        genres: true;
+        explicitGenres: true;
+        demographics: true;
+        themes: true;
+      };
+    };
   };
 }>;
 

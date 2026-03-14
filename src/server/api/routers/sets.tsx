@@ -8,7 +8,6 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { db } from "~/server/db";
-import type { AnimeCharacter } from "../../../../generated/prisma/client";
 import { cacheAnime, cacheAnimeCharacters } from "../utils/jikan";
 
 const tokens = {

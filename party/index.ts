@@ -1,5 +1,12 @@
 import type * as Party from "partykit/server";
-import type { ClientMessage, ServerMessage, Player, RoomState } from "./types";
+import {
+  type ClientMessage,
+  type ServerMessage,
+  type Player,
+  type RoomState,
+  type Message,
+  playerColors,
+} from "./types";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET ?? "";
@@ -18,6 +25,7 @@ export default class GameRoom implements Party.Server {
     turnDurationMs: 45_000,
     turnEndsAt: null,
     timeRemainingMs: null,
+    chat: [],
   };
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
@@ -58,6 +66,12 @@ export default class GameRoom implements Party.Server {
         break;
       case "selected-set":
         this.handleSelectSet(sender, msg.setId);
+        break;
+      case "sendMessage":
+        this.handleSendMessage(sender, msg.message);
+        break;
+      case "makeGuess":
+        this.handleMakeGuess(sender, msg.characterId);
         break;
       case "guess":
         // TODO: handle guess logic
@@ -122,6 +136,8 @@ export default class GameRoom implements Party.Server {
       connected: true,
       characterToGuess: null,
       turnt: [],
+      eliminated: false,
+      color: playerColors[Math.floor(Math.random() * playerColors.length)]!,
     };
     this.state.players.push(player);
 
@@ -165,6 +181,7 @@ export default class GameRoom implements Party.Server {
       chars = shuffle(chars);
       // Assign a random character to each player
       player.characterToGuess = chars.pop()?.id || null;
+      player.eliminated = false;
     }
 
     this.state.set.characters = shuffle(this.state.set.characters);
@@ -174,6 +191,22 @@ export default class GameRoom implements Party.Server {
       connectedPlayers[Math.floor(Math.random() * connectedPlayers.length)]
         ?.id ?? null;
     this.state.status = "playing";
+
+    // Initialize turn end; clients compute the remaining seconds locally.
+    this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
+    this.state.timeRemainingMs = null;
+
+    void fetch(
+      `${APP_URL}/api/internal/set/${encodeURIComponent(this.state.set.id)}`,
+      {
+        headers: { "x-internal-secret": INTERNAL_SECRET },
+      },
+    ).then((res) => {
+      if (!res.ok) {
+        this.send(conn, { type: "error", message: "Character set not found" });
+        return;
+      }
+    });
 
     // Start the turn timer loop.
     this.startTurnTimer();
@@ -286,15 +319,12 @@ export default class GameRoom implements Party.Server {
       return;
     }
 
-    const remaining = Math.max(0, endsAt - now);
-    this.state.timeRemainingMs = remaining;
-
-    if (remaining <= 0) {
+    // Server stays authoritative, but clients can compute the countdown locally.
+    // Only broadcast when the turn actually changes.
+    if (now >= endsAt) {
       this.advanceTurn();
+      this.broadcast({ type: "room-state", state: this.state });
     }
-
-    // Per requirement: update all clients every second.
-    this.broadcast({ type: "room-state", state: this.state });
   }
 
   private advanceTurn() {
@@ -312,7 +342,7 @@ export default class GameRoom implements Party.Server {
       currentIndex === -1 ? 0 : (currentIndex + 1) % connected.length;
     this.state.turn = connected[nextIndex]?.id ?? connected[0]!.id;
     this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
-    this.state.timeRemainingMs = this.state.turnDurationMs;
+    this.state.timeRemainingMs = null;
   }
 
   private handleEndTurn(conn: Party.Connection) {
@@ -332,6 +362,72 @@ export default class GameRoom implements Party.Server {
     this.advanceTurn();
   }
 
+  private handleSendMessage(conn: Party.Connection, message: string) {
+    const player = this.state.players.find((p) => p.connectionId === conn.id);
+    if (!player) return;
+
+    if (!message.trim()) return;
+    if (message.length > 200) {
+      message = message.substring(0, 200);
+    }
+    // Broadcast the new message to all clients
+    const chatMessage: Message = {
+      id: this.generateId(),
+      senderId: player.id,
+      content: message,
+      timestamp: Date.now(),
+    };
+    this.state.chat.push(chatMessage);
+    this.broadcast({ type: "room-state", state: this.state });
+  }
+
+  private handleMakeGuess(conn: Party.Connection, characterId: number) {
+    const player = this.state.players.find((p) => p.connectionId === conn.id);
+    if (!player) return;
+
+    if (!this.state.turn || player.id !== this.state.turn) {
+      this.send(conn, {
+        type: "error",
+        message: "It's not your turn",
+      });
+      return;
+    }
+
+    // Check if the guess is correct
+    const character = this.state.set?.characters.find(
+      (c) => c.id === characterId,
+    );
+    if (!character) return;
+
+    if (character.id === player.characterToGuess) {
+      this.state.status = "finished";
+      this.broadcast({ type: "room-state", state: this.state });
+      this.broadcast({
+        type: "correct-guess",
+        winner: player.id,
+      });
+    } else {
+      this.state.players = this.state.players.map((p) =>
+        p.id === player.id ? { ...p, eliminated: true } : p,
+      );
+
+      if (this.state.players.filter((p) => !p.eliminated).length === 1) {
+        this.state.status = "finished";
+        this.broadcast({ type: "room-state", state: this.state });
+        this.broadcast({
+          type: "last-player-standing",
+          winner: player.id,
+        });
+      }
+
+      this.broadcast({ type: "room-state", state: this.state });
+      this.send(conn, {
+        type: "incorrect-guess",
+        message: "Wrong guess, you are eliminated!",
+      });
+    }
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────
   private send(conn: Party.Connection, msg: ServerMessage) {
     conn.send(JSON.stringify(msg));
@@ -339,6 +435,10 @@ export default class GameRoom implements Party.Server {
 
   private broadcast(msg: ServerMessage) {
     this.room.broadcast(JSON.stringify(msg));
+  }
+
+  private generateId() {
+    return crypto.randomUUID();
   }
 }
 

@@ -9,7 +9,9 @@ export type ClientMessage =
   | { type: "selected-set"; setId: string }
   | { type: "turnCard"; playerId: string; characterId: number }
   | { type: "guess"; characterId: number }
-  | { type: "endTurn" };
+  | { type: "endTurn" }
+  | { type: "makeGuess"; characterId: number }
+  | { type: "sendMessage"; message: string };
 
 // Messages sent FROM the server TO clients
 export type ServerMessage =
@@ -17,7 +19,10 @@ export type ServerMessage =
   | { type: "player-joined"; player: Player }
   | { type: "player-left"; playerId: string }
   | { type: "game-started" }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "correct-guess"; winner: string }
+  | { type: "last-player-standing"; winner: string }
+  | { type: "incorrect-guess"; message: string };
 
 export type Player = {
   id: string; // stable player ID (generated client-side, persisted in sessionStorage)
@@ -27,6 +32,8 @@ export type Player = {
   connected: boolean;
   characterToGuess: number | null;
   turnt: number[];
+  eliminated: boolean;
+  color: string;
 };
 
 export type RoomState = {
@@ -39,4 +46,23 @@ export type RoomState = {
   turnDurationMs: number; // configurable turn duration
   turnEndsAt: number | null; // epoch ms when current turn ends
   timeRemainingMs: number | null; // server-computed remaining time (updated every second)
+  chat: Message[];
 };
+
+export type Message = {
+  id: string;
+  senderId: string;
+  content: string;
+  timestamp: number;
+};
+
+export const playerColors = [
+  "red-500",
+  "blue-500",
+  "violet-500",
+  "yellow-500",
+  "purple-500",
+  "orange-500",
+  "pink-500",
+  "teal-500",
+];

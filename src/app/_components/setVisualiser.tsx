@@ -1,7 +1,6 @@
 import { cn } from "~/lib/utils";
-import type { AnimeCharacter } from "../../../generated/prisma/client";
 import Image from "next/image";
-import type { AnimeGameSet } from "~/server/api/utils/jikan";
+import type { AnimeCharacter, AnimeGameSet } from "~/server/api/utils/jikan";
 import { useParty } from "~/utils/PartyProvider";
 import { User2 } from "lucide-react";
 

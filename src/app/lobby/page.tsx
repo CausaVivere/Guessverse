@@ -14,6 +14,7 @@ import { useParty } from "~/utils/PartyProvider";
 import SetVisualizer from "../_components/setVisualiser";
 import type { AnimeGameSet } from "~/server/api/utils/jikan";
 import { Video } from "lucide-react";
+import Chat from "../_components/chat";
 
 export default function Lobby() {
   const [changingSet, setIsChangingSet] = useState(false);
@@ -62,7 +63,7 @@ export default function Lobby() {
           <Separator className="mb-5 w-full" />
         </div>
         <div className="min flex w-full items-start justify-between gap-4">
-          <div className="border-accent flex h-[60vh] w-1/5 flex-col gap-2 border-r p-4">
+          <div className="border-accent flex h-[60vh] w-1/5 flex-col gap-2 border-r">
             <p className="text-foreground text-center text-sm font-semibold">
               Click to change set
             </p>
@@ -134,7 +135,7 @@ export default function Lobby() {
               </div>
             ))}
           </div>
-          <div className="flex w-full flex-col items-center gap-2 px-4">
+          <div className="flex h-full w-full flex-col items-center">
             {!roomState.set && !isHost ? (
               <Loading
                 message="Waiting for host to select character set..."
@@ -144,10 +145,11 @@ export default function Lobby() {
               <SelectAnimeSet />
             ) : (
               <div className="flex h-full w-full justify-center gap-6">
-                <SetVisualizer set={roomState.set} />
+                <SetVisualizer className="" set={roomState.set} />
               </div>
             )}
           </div>
+          <Chat className="h-192 w-120" />
         </div>
 
         <div className="mt-5 flex justify-between gap-2">
