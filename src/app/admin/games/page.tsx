@@ -205,7 +205,7 @@ export type IgdbImageSize =
   | "720p" // 1280x720
   | "1080p"; // 1920x1080
 
-export function getIgdbImageUrl(
+function getIgdbImageUrl(
   url: string,
   size: IgdbImageSize = "cover_big",
 ): string {

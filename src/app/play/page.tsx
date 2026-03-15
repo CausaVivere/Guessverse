@@ -150,7 +150,10 @@ export default function PlayPage() {
         </div>
         <div className="flex items-center gap-2 text-xs text-white/85 uppercase">
           <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide">
-            Game left: {gameTimeLeftSeconds != null ? `${Math.floor(gameTimeLeftSeconds / 60)}m ${gameTimeLeftSeconds % 60}s` : "—"}
+            Game left:{" "}
+            {gameTimeLeftSeconds != null
+              ? `${Math.floor(gameTimeLeftSeconds / 60)}m ${gameTimeLeftSeconds % 60}s`
+              : "—"}
           </span>
           <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide">
             Turns left: {turnsLeft ?? "—"}
@@ -254,7 +257,7 @@ export default function PlayPage() {
   );
 }
 
-export function Instructions({ className }: { className?: string }) {
+function Instructions({ className }: { className?: string }) {
   return (
     <div
       className={cn(
