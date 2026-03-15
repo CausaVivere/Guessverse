@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://${VERCEL_PROJECT_PRODUCTION_URL:-${VERCEL_URL:-localhost:3000}}} next build && prisma generate && if [ -n \"$VERCEL\" ]; then npx partykit deploy; fi",
     "check": "next lint && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
