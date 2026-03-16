@@ -151,6 +151,7 @@ export const setRouter = createTRPCRouter({
     .input(
       z.object({
         search: z.string().optional(),
+        limit: z.number().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -195,6 +196,7 @@ export const setRouter = createTRPCRouter({
             },
           ],
         },
+        take: input.limit ?? 20,
       });
       return data;
     }),

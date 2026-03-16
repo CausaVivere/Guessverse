@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { motion, AnimatePresence, useMotionValue } from "motion/react";
@@ -87,7 +87,15 @@ export const FollowPointer = ({
     "#3b82f6",
     "#ef4444",
     "#eab308",
+    "#8b5cf6",
+    "#ec4899",
+    "#f97316",
   ];
+
+  const color = useMemo(() => {
+    return colors[Math.floor(Math.random() * colors.length)];
+  }, [title]);
+
   return (
     <motion.div
       className="fixed h-4 w-4 rounded-full"
@@ -126,7 +134,7 @@ export const FollowPointer = ({
       )}
       <motion.div
         style={{
-          backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+          backgroundColor: color,
         }}
         initial={{
           scale: 0.5,

@@ -123,7 +123,7 @@ export default function SetVisualizer({
           <div className="pointer-events-none absolute inset-1 rounded-[1.95rem] border border-red-200/20" />
           <div className="pointer-events-none absolute inset-0 rounded-[2.05rem] bg-linear-to-b from-white/7 via-transparent to-black/25" />
           <div className="pointer-events-none absolute top-2 right-5 text-[9px] font-semibold tracking-[0.26em] text-red-100/80 uppercase">
-            Guessverse Board
+            Guessverse - {set.name}
           </div>
 
           <div className="relative grid h-full w-fit grid-cols-6 gap-6">

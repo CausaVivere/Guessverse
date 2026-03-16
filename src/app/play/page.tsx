@@ -4,7 +4,13 @@ import { useParty } from "~/utils/PartyProvider";
 import { useRouter } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import Loading from "~/components/ui/loading";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import SetVisualizer from "../_components/setVisualiser";
 import { cn } from "~/lib/utils";
 import { ChevronLeft } from "lucide-react";
@@ -21,6 +27,7 @@ import EndScreen from "../_components/endScreen";
 import DrawScreen from "../_components/drawScreen";
 import EliminationScreen from "../_components/eliminationScreen";
 import Players from "./_components/players";
+import { twColor500To700Rgb, twColor500ToRgb } from "~/utils/general";
 
 export default function PlayPage() {
   const [gameOver, setGameOver] = useState(false);
@@ -77,10 +84,20 @@ export default function PlayPage() {
   }, [roomId, router]);
 
   useEffect(() => {
+    // Set background video playback rate
+    const video = document.getElementById("bgvid") as HTMLVideoElement | null;
+    if (video) {
+      video.playbackRate = 0.75;
+    }
+  }, []);
+
+  useEffect(() => {
     if (roomState?.status === "finished" || roomState?.winnerId) {
       setGameOver(true);
+    } else if (roomState?.status === "playing") {
+      setGameOver(false);
     }
-  }, [roomState]);
+  }, [roomState?.status, roomState?.winnerId]);
 
   useEffect(() => {
     if (!incorrectGuess) return;
@@ -108,7 +125,7 @@ export default function PlayPage() {
     return (
       <div className="bg-background flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-lg">Waiting for the host to start the game...</p>
-        <Button variant="secondary" onClick={() => router.push("/")}>
+        <Button variant="game-danger" onClick={() => router.push("/")}>
           Back to Lobby
         </Button>
       </div>
@@ -136,12 +153,26 @@ export default function PlayPage() {
 
   const isDraw = roomState.status === "finished" && roomState.winnerId === null;
 
+  const accent = twColor500ToRgb(
+    currentPlayer?.color ?? player?.color ?? "gray-500",
+  );
+  const bgAccent = twColor500To700Rgb(
+    currentPlayer?.color ?? player?.color ?? "gray-500",
+  );
+
   // ─── Game is playing ────────────────────────────────────────
   return (
-    <div className="bg-background flex min-h-screen flex-col items-center justify-center gap-6">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-6"
+      style={
+        {
+          "--accent": accent,
+          "--bgAccent": bgAccent,
+        } as CSSProperties
+      }
+    >
       <div className="mt-10 flex w-full max-w-3xl items-center justify-center gap-5 px-4">
-        <div className="text-3xl">
-          <span className="font-medium">Turn:</span>{" "}
+        <div className="text-3xl font-bold">
           {currentTurnPlayer?.name ?? "—"}
           {roomState.turn === playerId ? " (you)" : ""}
         </div>
@@ -149,13 +180,13 @@ export default function PlayPage() {
           {remainingSeconds != null ? `${remainingSeconds}s` : "—"}
         </div>
         <div className="flex items-center gap-2 text-xs text-white/85 uppercase">
-          <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide">
-            Game left:{" "}
+          <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide backdrop-blur-3xl">
+            Time left:{" "}
             {gameTimeLeftSeconds != null
               ? `${Math.floor(gameTimeLeftSeconds / 60)}m ${gameTimeLeftSeconds % 60}s`
               : "—"}
           </span>
-          <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide">
+          <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 tracking-wide backdrop-blur-3xl">
             Turns left: {turnsLeft ?? "—"}
           </span>
         </div>
@@ -164,15 +195,15 @@ export default function PlayPage() {
       <div className="flex h-full flex-row items-center justify-center">
         <div className="flex w-full gap-5">
           {!myTurn ? (
-            <div className="flex h-full w-100 flex-col items-center justify-center">
+            <div className="z-20 flex h-full w-100 flex-col items-center justify-center">
               <p className="mb-5 text-xl font-semibold">Character to Guess:</p>
               <AnimeCharacterInfo
-                className="h-full"
+                className="bg-background/20 h-full border-[rgb(var(--accent)/0.6)] backdrop-blur-xl"
                 character={characterToGuess!}
               />
             </div>
           ) : (
-            <Instructions className="h-full w-100" />
+            <Instructions className="border-[rgb(var(--accent)/0.6)]2 z-20 h-full w-100" />
           )}
           <SetVisualizer
             set={set}
@@ -183,47 +214,45 @@ export default function PlayPage() {
             myTurn={myTurn}
           />
         </div>
-        <div className="-ml-18 flex h-192 max-h-192 min-h-0 w-120 flex-col items-stretch gap-2">
+        <div className="z-20 -ml-18 flex h-192 max-h-192 min-h-0 w-120 flex-col items-stretch gap-2">
           <Players className="h-auto max-h-64 w-full shrink-0 overflow-y-auto" />
-          <Chat className="min-h-0 w-full flex-1" />
+          <Chat
+            className="bg-background/40 min-h-0 w-full flex-1 border-[rgb(var(--accent)/0.8)] backdrop-blur-xl"
+            accent={accent}
+            bgAccent={bgAccent}
+          />
         </div>
       </div>
 
       <div className="flex h-60 gap-8">
         <Button
-          variant="secondary"
+          variant="game-gold"
           onClick={() => {
             if (!guessedCharacterId) return;
             send({ type: "makeGuess", characterId: guessedCharacterId });
           }}
-          className={cn(
-            "h-24 w-64 bg-blue-900 text-4xl font-bold text-blue-100",
-            {
-              hidden: !canMakeGuess || !guessedCharacterId,
-            },
-          )}
+          className={cn("h-24 w-64 text-4xl font-bold", {
+            hidden: !canMakeGuess || !guessedCharacterId,
+          })}
         >
           Make Guess
         </Button>
         <Button
-          variant="secondary"
+          variant="game"
           onClick={(e) => {
             e.preventDefault();
             endTurn();
           }}
-          className={cn(
-            "h-24 w-64 bg-yellow-900 text-4xl font-bold text-yellow-100",
-            {
-              hidden: roomState?.turn !== playerId,
-            },
-          )}
+          className={cn("h-24 w-64 text-4xl font-bold", {
+            hidden: roomState?.turn !== playerId,
+          })}
         >
           END TURN
         </Button>
       </div>
 
       <Button
-        variant="destructive"
+        variant="game-danger"
         onClick={() => {
           leaveRoom();
           router.push("/");
@@ -253,6 +282,27 @@ export default function PlayPage() {
           />
         ) : null}
       </div>
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="playsInline absolute inset-0 z-0 max-h-screen min-h-screen min-w-screen overflow-clip blur-xl">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="none"
+            id="bgvid"
+          >
+            <source src="/assets/smoke2.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div
+            className="absolute inset-0 z-0 min-h-screen min-w-screen mix-blend-overlay transition-colors duration-1500 ease-in-out"
+            style={{ backgroundColor: "rgb(var(--bgAccent))" }}
+          ></div>
+        </div>
+        <div className="absolute inset-0 z-0 h-full w-full bg-[radial-gradient(#000000_1px,transparent_1px)] bg-size-[16px_16px]"></div>
+      </div>
     </div>
   );
 }
@@ -261,7 +311,7 @@ function Instructions({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "border-accent/60 from-background via-background to-muted/40 relative overflow-hidden rounded-2xl border bg-linear-to-br p-5 shadow-lg",
+        "border-accent/60 from-background/20 via-background/20 to-muted/20 relative overflow-hidden rounded-2xl border bg-linear-to-br p-5 shadow-lg backdrop-blur-xl",
         className,
       )}
     >

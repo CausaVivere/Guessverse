@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Send } from "lucide-react";
 import { useParty } from "~/utils/PartyProvider";
 import { cn } from "~/lib/utils";
+import { twColor500To700Rgb } from "~/utils/general";
 
 function twColor500ToRgb(color: string): string {
   // These map to Tailwind's default palette (approx), good enough for subtle chat tinting.
@@ -30,8 +37,16 @@ function twColor500ToRgb(color: string): string {
   }
 }
 
-export default function Chat({ className }: { className?: string }) {
-  const { roomState, connected, playerId, sendMessage } = useParty();
+export default function Chat({
+  className,
+  accent,
+  bgAccent,
+}: {
+  className?: string;
+  accent?: string;
+  bgAccent?: string;
+}) {
+  const { roomState, connected, playerId, sendMessage, player } = useParty();
   const [draft, setDraft] = useState("");
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,6 +59,16 @@ export default function Chat({ className }: { className?: string }) {
   }, [roomState?.players]);
 
   const messages = roomState?.chat ?? [];
+
+  const myAccent = useMemo(() => {
+    if (player?.color) return twColor500ToRgb(player.color);
+    return "rgb(148 163 184)"; // slate-400 fallback
+  }, [player?.color]);
+
+  const myBgAccent = useMemo(() => {
+    if (player?.color) return twColor500To700Rgb(player.color);
+    return "rgb(148 163 184 / 0.1)"; // slate-400 fallback
+  }, [player?.color]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -65,9 +90,21 @@ export default function Chat({ className }: { className?: string }) {
         "bg-background border-accent flex h-full w-full flex-col overflow-hidden rounded-xl border",
         className,
       )}
+      style={
+        {
+          "--accent": accent,
+          "--myAccent": myAccent,
+          "--myBgAccent": myBgAccent,
+        } as CSSProperties
+      }
     >
       {/* Header */}
-      <div className="border-accent/60 flex items-center justify-between border-b px-4 py-3">
+      <div
+        className={cn(
+          "border-accent/60 flex items-center justify-between border-b px-4 py-3",
+          accent ? `border-[rgb(var(--accent)/0.8)]` : "",
+        )}
+      >
         <div className="flex flex-col">
           <div className="text-sm font-semibold">Room chat</div>
           <div className="text-muted-foreground text-xs">
@@ -113,7 +150,7 @@ export default function Chat({ className }: { className?: string }) {
                 className={cn(
                   "max-w-[80%] rounded-lg px-3 py-1",
                   mine
-                    ? "border border-emerald-500/20 bg-emerald-600/20"
+                    ? "border border-[rgb(var(--myAccent)/0.20)] bg-[rgb(var(--myBgAccent)/0.20)]"
                     : [
                         // Use the sender's assigned color for a subtle border + tint.
                         "border",
@@ -142,7 +179,12 @@ export default function Chat({ className }: { className?: string }) {
       </div>
 
       {/* Composer */}
-      <div className="border-accent/60 flex items-end gap-2 border-t p-3">
+      <div
+        className={cn(
+          "border-accent/60 flex items-end gap-2 border-t p-3",
+          accent ? `border-[rgb(var(--accent)/0.8)]` : "",
+        )}
+      >
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

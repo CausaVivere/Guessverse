@@ -22,10 +22,11 @@ export default function SelectAnimeSet({
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
 
-  const { roomState, selectSet } = useParty();
+  const { roomState, selectSet, isFetchingSet } = useParty();
 
   const { data: sets, isLoading } = api.sets.getAnimeSets.useQuery({
     search: query,
+    limit: 20,
   });
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function SelectAnimeSet({
         Select Character Set
       </div>
 
-      <ButtonGroup className="mb-5 w-full">
+      <ButtonGroup className="mb-2 w-full">
         <Input
           placeholder="Search for character set by anime name or character name..."
           value={search}
@@ -56,7 +57,7 @@ export default function SelectAnimeSet({
           Search
         </Button>
       </ButtonGroup>
-      <div className="flex h-[60vh] flex-col gap-3">
+      <div className="no-scrollbar flex h-195 flex-col gap-3 overflow-y-scroll">
         {isLoading ? (
           <Loading
             message="Loading character sets..."
@@ -67,7 +68,7 @@ export default function SelectAnimeSet({
             <div
               key={s.id}
               className={cn(
-                "group relative flex h-24 flex-row gap-3 overflow-hidden rounded-xl border border-red-200/25 bg-zinc-900/60 px-5 py-2 transition-all duration-300 hover:cursor-pointer hover:border-red-200/55 hover:bg-zinc-800/80 hover:shadow-[0_10px_24px_rgba(2,6,23,0.35)]",
+                "group relative flex h-24 shrink-0 flex-row gap-3 overflow-hidden rounded-xl border border-red-200/25 bg-zinc-900/60 px-5 py-2 transition-all duration-300 hover:cursor-pointer hover:border-red-200/55 hover:bg-zinc-800/80",
                 roomState?.set?.id === s.id
                   ? "border-red-400/80 bg-red-500/15"
                   : "",
@@ -104,6 +105,12 @@ export default function SelectAnimeSet({
           <div className="h-full w-full text-lg font-semibold">
             No character sets found for: {query}
           </div>
+        )}
+        {isFetchingSet && (
+          <Loading
+            message="Getting new character set..."
+            className="absolute inset-0 z-10 h-full w-full rounded-[2rem] bg-zinc-950/90 backdrop-blur-sm"
+          />
         )}
       </div>
       <Button

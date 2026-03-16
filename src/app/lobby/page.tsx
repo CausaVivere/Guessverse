@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Button } from "~/components/ui/button";
 import Loading from "~/components/ui/loading";
 import { Separator } from "~/components/ui/separator";
@@ -13,6 +13,7 @@ import { Crown, Video } from "lucide-react";
 import Chat from "../_components/chat";
 import { motion, useReducedMotion } from "framer-motion";
 import SelectAnimeSet from "./_components/selectAnimeSet";
+import { twColor500ToRgb } from "~/utils/general";
 
 export default function Lobby() {
   const [changingSet, setIsChangingSet] = useState(false);
@@ -27,6 +28,7 @@ export default function Lobby() {
     leaveRoom,
     startGame,
   } = useParty();
+
   const prefersReducedMotion = useReducedMotion();
 
   const router = useRouter();
@@ -47,6 +49,14 @@ export default function Lobby() {
     setIsChangingSet(false);
   }, [roomState?.set]);
 
+  useEffect(() => {
+    // Set background video playback rate
+    const video = document.getElementById("bgvid") as HTMLVideoElement | null;
+    if (video) {
+      video.playbackRate = 0.75;
+    }
+  }, []);
+
   if (!connected) {
     return <Loading message="Connecting to room..." fullScreen />;
   }
@@ -56,9 +66,9 @@ export default function Lobby() {
   }
 
   return (
-    <div className="bg-background flex min-h-screen w-full flex-col items-center justify-center">
-      <div className="border-accent w-4/5 flex-col items-center justify-center gap-6 rounded-4xl border px-12 pt-5 pb-24">
-        <div className="flex flex-col gap-2">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center">
+      <div className="border-accent w-4/5 flex-col items-center justify-center gap-6 rounded-4xl border px-12 pt-5 pb-12 backdrop-blur-xl">
+        <div className="flex w-full flex-col items-center gap-2">
           <h1 className="text-3xl font-bold">Room: {roomId}</h1>
           <p className="text-muted-foreground text-sm">
             Share this code with friends to let them join
@@ -107,8 +117,8 @@ export default function Lobby() {
                 <div className="border-secondary flex h-20 w-20 items-center justify-center rounded-lg border">
                   <Video />
                 </div>
-                <div className="h-full w-full">
-                  <h3 className="text-xl font-semibold">
+                <div className="flex h-full w-full items-center">
+                  <h3 className="text-base font-semibold">
                     Waiting for host to choose set
                   </h3>
                 </div>
@@ -121,7 +131,15 @@ export default function Lobby() {
             </h2>
             <Separator />
             {roomState.players.map((player) => (
-              <div key={player.id} className="flex items-center gap-2">
+              <div
+                key={player.id}
+                className="flex items-center gap-2 text-[rgb(var(--player-rgb))]"
+                style={
+                  {
+                    "--player-rgb": twColor500ToRgb(player.color),
+                  } as CSSProperties
+                }
+              >
                 <span
                   className={cn(
                     "text-xl font-semibold",
@@ -217,19 +235,50 @@ export default function Lobby() {
         </div>
 
         <div className="mt-5 flex justify-between gap-2">
-          <Button variant="destructive" onClick={leaveRoom}>
+          <Button
+            variant="game-danger"
+            className="h-12 w-36 text-xl font-semibold"
+            onClick={leaveRoom}
+          >
             Leave Room
           </Button>
           {isHost && roomState.status === "waiting" && (
-            <Button onClick={() => startGame()} className="text-xl font-bold">
+            <Button
+              variant="game-gold"
+              className="h-20 w-96 text-3xl font-bold"
+              onClick={() => startGame()}
+            >
               Start Game
             </Button>
           )}
+          {roomState.status === "playing" && (
+            <Button
+              variant="game"
+              className="h-20 w-96 text-3xl font-bold"
+              onClick={() => router.push("/play")}
+            >
+              Go to Game
+            </Button>
+          )}
         </div>
-
-        {roomState.status === "playing" && (
-          <Button onClick={() => router.push("/play")}>Go to Game</Button>
-        )}
+      </div>
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="playsInline absolute inset-0 z-0 max-h-screen min-h-screen min-w-screen overflow-clip blur-lg">
+          <video
+            className="absolute inset-0 h-full w-full object-cover"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="none"
+            id="bgvid"
+          >
+            <source src="/assets/smoke2.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 z-0 min-h-screen min-w-screen bg-emerald-700 mix-blend-overlay"></div>
+        </div>
+        <div className="absolute inset-0 z-0 h-full w-full bg-[radial-gradient(#000000_1px,transparent_1px)] bg-size-[16px_16px]"></div>
       </div>
     </div>
   );

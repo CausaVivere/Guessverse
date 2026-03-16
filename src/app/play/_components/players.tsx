@@ -38,7 +38,7 @@ export default function Players({
             <div
               key={p.id}
               className={cn(
-                "relative flex h-8 items-center gap-3 rounded-lg border px-3 py-2",
+                "bg-background relative flex h-8 items-center gap-3 rounded-lg border px-3 py-2 backdrop-blur-2xl",
                 {
                   "border-[rgb(var(--player-rgb)/0.35)] bg-[rgb(var(--player-rgb)/0.08)]":
                     isTurn,

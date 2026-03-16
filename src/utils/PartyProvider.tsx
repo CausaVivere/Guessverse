@@ -8,6 +8,7 @@ import {
   useState,
   useCallback,
   type ReactNode,
+  useMemo,
 } from "react";
 import PartySocket from "partysocket";
 import type {
@@ -85,6 +86,7 @@ type PartyContextValue = {
     loser?: string;
     guessedCharacterId?: number;
   } | null;
+  isFetchingSet: boolean;
 
   // Actions
   setPlayerName: (name: string) => void;
@@ -122,6 +124,8 @@ export function PartyProvider({ children }: { children: ReactNode }) {
     loser?: string;
     guessedCharacterId?: number;
   } | null>(null);
+  const [isFetchingSet, setIsFetchingSet] = useState(false);
+  const [lastSetId, setLastSetId] = useState<string | null>(null);
   const socketRef = useRef<PartySocket | null>(null);
   const playerNameRef = useRef(playerName);
   const hasRestoredRef = useRef(false);
@@ -184,6 +188,10 @@ export function PartyProvider({ children }: { children: ReactNode }) {
             // Clear it when a new game actually starts.
             if (msg.state.status === "playing") {
               setLastPlayerStandingWinner(null);
+            }
+            if (msg.state.set?.id && msg.state.set.id !== lastSetId) {
+              setIsFetchingSet(false);
+              setLastSetId(msg.state.set.id);
             }
             break;
           case "player-joined":
@@ -288,6 +296,8 @@ export function PartyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const selectSet = useCallback((setId: string) => {
+    setIsFetchingSet(true);
+    setLastSetId(roomState?.set?.id ?? null);
     socketRef.current?.send(
       JSON.stringify({
         type: "selected-set",
@@ -332,7 +342,9 @@ export function PartyProvider({ children }: { children: ReactNode }) {
     socketRef.current?.send(JSON.stringify(msg));
   }, []);
 
-  const player = roomState?.players.find((p) => p.id === playerId) ?? null;
+  const player = useMemo(() => {
+    return roomState?.players.find((p) => p.id === playerId) ?? null;
+  }, [roomState, playerId]);
 
   return (
     <PartyContext.Provider
@@ -347,6 +359,7 @@ export function PartyProvider({ children }: { children: ReactNode }) {
         player,
         incorrectGuess,
         lastPlayerStandingWinner,
+        isFetchingSet,
         setPlayerName,
         createRoom,
         joinRoom,
