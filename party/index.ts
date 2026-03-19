@@ -401,21 +401,31 @@ export default class GameRoom implements Party.Server {
       return;
     }
 
-    const connected = this.state.players.filter(
-      (p) => p.connected && !p.eliminated,
-    );
-    if (connected.length === 0) {
+    const connected = this.state.players.filter((p) => p.connected);
+    const active = connected.filter((p) => !p.eliminated);
+
+    if (active.length === 0) {
       this.state.turn = null;
       this.state.turnEndsAt = null;
       this.state.timeRemainingMs = null;
       return;
     }
 
-    // If current turn player disconnected, or we just ended the turn, go next.
+    // Keep connected-player seat order and skip eliminated players.
     const currentIndex = connected.findIndex((p) => p.id === this.state.turn);
-    const nextIndex =
-      currentIndex === -1 ? 0 : (currentIndex + 1) % connected.length;
-    this.state.turn = connected[nextIndex]?.id ?? connected[0]!.id;
+    if (currentIndex === -1) {
+      this.state.turn = active[0]!.id;
+    } else {
+      let nextTurnId: string | null = null;
+      for (let offset = 1; offset <= connected.length; offset += 1) {
+        const candidate = connected[(currentIndex + offset) % connected.length];
+        if (candidate && !candidate.eliminated) {
+          nextTurnId = candidate.id;
+          break;
+        }
+      }
+      this.state.turn = nextTurnId ?? active[0]!.id;
+    }
     this.state.turnCount += 1;
     this.state.turnEndsAt = Date.now() + this.state.turnDurationMs;
     this.state.timeRemainingMs = null;
